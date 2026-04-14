@@ -1,21 +1,17 @@
-# ZCModelKit 📦
+# ZCModelKit 🚀
 
-ZCModelKit is a lightweight, zero-intrusion JSON decoding library for Swift. It allows you to handle complex JSON structures, custom key mappings, and default values without ever modifying your `Codable` models.
+A lightweight, zero-configuration JSON decoding utility for Swift.
 
-## ✨ Key Features
+## 🌟 Philosophy
+**No Annotations. No Mapping. Just Decodable.**
 
-- **Zero Intrusion**: No macros, no annotations. Your models remain pure `Codable`.
-- **Path Navigation**: Decode nested objects directly using dot-notation paths (e.g., `"data.user.profile"`).
-- **Dynamic Mapping**: Map JSON keys to model properties at runtime.
-- **Default Values**: Inject default values for missing fields dynamically.
+ZCModelKit allows you to extract and decode models from complex JSON structures using simple path strings, without modifying your models or writing tedious `CodingKeys`.
 
-## 🚀 Quick Start
-
-### Installation
-Add `ZCModelKit` to your project via Swift Package Manager:
+## 📦 Installation
+Add the following package to your project:
 `https://github.com/ZClee128/ZCModelKit`
 
-### Usage
+## 🚀 Quick Start
 
 ```swift
 struct User: Codable {
@@ -23,17 +19,29 @@ struct User: Codable {
     var age: Int
 }
 
-let decoder = ZCJSONDecoder()
-let json = ... // Your JSON Data
+let json = """
+{
+    "api": {
+        "data": {
+            "user": {
+                "name": "ZClee",
+                "age": 25
+            }
+        }
+    }
+}""".data(using: .utf8)!
 
-let user = try decoder.decode(
-    User.self, 
-    from: json, 
-    path: "api_data.user", 
-    mapping: ["name": "full_name"], 
-    defaults: ["age": 18]
-)
+// Just one line to get your model from any path!
+do {
+    let user = try json.asDecodable(User.self, path: "api.data.user")
+    print("Hello, \(user.name)!")
+} catch {
+    print("Decoding failed: \(error)")
+}
 ```
 
-## 🛠 How it Works
-ZCModelKit acts as a preprocessing layer. It navigates to the target JSON path, translates the keys based on your mapping, injects default values, and then hands the "cleaned" data to the native `JSONDecoder`. This ensures 100% compatibility with Swift's `Codable` system while removing all the boilerplate.
+## ✨ Features
+- **Path-based Navigation**: Extract models from any nested level using dot-notation (`"a.b.c"`).
+- **Zero Intrusion**: Works with any standard `Codable` type. No macros, no annotations.
+- **Smart Conversion**: Automatically handles `snake_case` to `camelCase` conversion.
+- **Ultra Lightweight**: Zero dependencies, minimal overhead.
