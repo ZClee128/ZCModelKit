@@ -137,7 +137,7 @@ struct Company: Codable, Equatable {
     let employees: [User]
 }
 
-func assertTest<T: Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
+func assertTest<T: Decodable & Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
     let data = json.data(using: .utf8)!
     do {
         let result = try data.zcDecode(T.self, path: path)
@@ -180,7 +180,7 @@ do {
     print("❌ FAIL: Map.zcDecode - Error: \(error)")
 }
 
-let array: [Any] = [["name\": \"ZC\", \"age\": \"25\", \"is_vip\": \"true\", \"score\": 100.0]]
+let array: [Any] = [["name": "ZC", "age": "25", "is_vip": "true", "score": 100.0]]
 do {
     let users = try array.zcDecode([User].self)
     if users.first?.name == "ZC" && users.first?.age == 25 {
