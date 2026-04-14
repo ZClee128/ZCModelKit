@@ -1,4 +1,3 @@
-
 import Foundation
 
 public enum ZCJSONError: Error {
@@ -8,18 +7,10 @@ public enum ZCJSONError: Error {
 }
 
 public extension Data {
-    /// 解析指定路径下的 JSON 为指定模型
-    /// - Parameters:
-    ///   - type: 目标模型类型 (需遵循 Codable)
-    ///   - path: JSON 路径, 例如 "data.user.profile"
-    /// - Returns: 解析后的模型对象
     func asDecodable<T: Decodable>(_ type: T.Type, path: String? = nil) throws -> T {
-        // 1. 将 Data 解析为基础字典/数组
         guard let jsonObject = try? JSONSerialization.jsonObject(with: self, options: []) else {
             throw ZCJSONError.invalidJSON
         }
-        
-        // 2. 路径导航
         var currentObject: Any = jsonObject
         if let path = path {
             let components = path.components(separatedBy: ".")
@@ -31,17 +22,30 @@ public extension Data {
                 }
             }
         }
-        
-        // 3. 使用原生 JSONDecoder 解析目标片段
-        // 开启 convertFromSnakeCase 以支持常见的下划线转驼峰
+        let processedObject = preprocess(currentObject)
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        
         do {
-            let targetData = try JSONSerialization.data(withJSONObject: currentObject, options: [])
+            let targetData = try JSONSerialization.data(withJSONObject: processedObject, options: [])
             return try decoder.decode(T.self, from: targetData)
         } catch {
             throw ZCJSONError.decodingError(error)
         }
+    }
+    private func preprocess(_ object: Any) -> Any {
+        if let dict = object as? [String: Any] {
+            var newDict = [String: Any]()
+            for (key, value) in dict { newDict[key] = preprocess(value) }
+            return newDict
+        } else if let array = object as? [Any] {
+            return array.map { preprocess($0) }
+        } else if let string = object as? String {
+            if let i = Int(string) { return i }
+            if let d = Double(string) { return d }
+            if string.lowercased() == "true" { return true }
+            if string.lowercased() == "false" { return false }
+            return string
+        }
+        return object
     }
 }
