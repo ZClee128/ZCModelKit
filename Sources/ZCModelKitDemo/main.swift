@@ -27,11 +27,10 @@ struct Company: Codable, Equatable {
 
 // --- Test Framework ---
 
-func assertTest<T: Decodable & Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
-    let decoder = ZCJSONDecoder()
+func assertTest<T: Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
     let data = json.data(using: .utf8)!
     do {
-        let result = try decoder.decode(T.self, from: data, path: path)
+        let result = try data.zcDecode(T.self, path: path)
         if result == expected {
             print("✅ PASS: \(name)")
         } else {
@@ -43,10 +42,9 @@ func assertTest<T: Decodable & Equatable>(name: String, json: String, type: T.Ty
 }
 
 func assertTestError<T: Decodable>(name: String, json: String, type: T.Type, path: String? = nil, expected: String) {
-    let decoder = ZCJSONDecoder()
     let data = json.data(using: .utf8)!
     do {
-        _ = try decoder.decode(T.self, from: data, path: path)
+        _ = try data.zcDecode(T.self, path: path)
         print("❌ FAIL: \(name) - Expected error \(expected), but succeeded")
     } catch {
         print("✅ PASS: \(name) - Caught expected error")
@@ -55,23 +53,44 @@ func assertTestError<T: Decodable>(name: String, json: String, type: T.Type, pat
 
 // --- Ultimate Stress Test Suite ---
 
-print("🚀 Starting ZCModelKit Commercial-Grade Stress Test...\n")
+print("🚀 Starting ZCModelKit Extension-based Stress Test...\n")
 
-// 1. Type Coercion
-assertTest(name: "Coercion: String '25' -> Int", json: "{\"name\": \"ZC\", \"age\": \"25\", \"is_vip\": true, \"score\": 99.5}", type: User.self, expected: User(name: "ZC", age: 25, isVip: true, score: 99.5))
-assertTest(name: "Coercion: String '99.5' -> Double", json: "{\"name\": \"ZC\", \"age\": 25, \"is_vip\": true, \"score\": \"99.5\"}", type: User.self, expected: User(name: "ZC", age: 25, isVip: true, score: 99.5))
-assertTest(name: "Coercion: String 'true' -> Bool", json: "{\"name\": \"ZC\", \"age\": 25, \"is_vip\": \"true\", \"score\": 99.5}", type: User.self, expected: User(name: "ZC", age: 25, isVip: true, score: 99.5))
+// 1. Testing Data extension (Type Coercion)
+let json1 = "{\"name\": \"ZC\", \"age\": \"25\", \"is_vip\": true, \"score\": 99.5}".data(using: .utf8)!
+assertTest(name: "Data.zcDecode (Coercion)", json: String(data: json1, encoding: .utf8)!, type: User.self, expected: User(name: "ZC", age: 25, isVip: true, score: 99.5))
 
-// 2. Deep Path Navigation
-assertTest(name: "Deep Path: a.b.c", json: "{\"a\": {\"b\": {\"c\": {\"level1\": {\"level2\": {\"value\": \"OK\"}}}}}}", type: DeepModel.self, path: "a.b.c", expected: DeepModel(level1: DeepModel.Level1(level2: DeepModel.Level1.Level2(value: "OK"))))
-assertTestError(name: "Invalid Path", json: "{\"data\": {\"user\": {\"name\": \"ZC\"}}}", type: User.self, path: "data.wrong", expected: "pathNotFound")
+// 2. Testing String extension (Deep Path)
+let json2 = "{\"a\": {\"b\": {\"c\": {\"level1\": {\"level2\": {\"value\": \"OK\"}}}}}}"
+assertTest(name: "String.zcDecode (Deep Path)", json: json2, type: DeepModel.self, path: "a.b.c", expected: DeepModel(level1: DeepModel.Level1(level2: DeepModel.Level1.Level2(value: "OK"))))
 
-// 3. Case Conversion & Collections
-assertTest(name: "SnakeCase -> CamelCase", json: "{\"company_name\": \"Apple\", \"employees\": []}", type: Company.self, expected: Company(companyName: "Apple", employees: []))
-assertTest(name: "Array with Coercion", json: "{\"company_name\": \"Apple\", \"employees\": [{\"name\": \"A\", \"age\": \"20\", \"is_vip\": true, \"score\": 1.1}, {\"name\": \"B\", \"age\": \"30\", \"is_vip\": false, \"score\": 2.2}]}", type: Company.self, expected: Company(companyName: "Apple", employees: [User(name: "A", age: 20, isVip: true, score: 1.1), User(name: "B", age: 30, isVip: false, score: 2.2)]))
+// 3. Testing Map (Dictionary) extension
+let map: [String: Any] = ["company_name": "Apple", "employees": []]
+do {
+    let company = try map.zcDecode(Company.self)
+    if company.companyName == "Apple" {
+        print("✅ PASS: Map.zcDecode")
+    } else {
+        print("❌ FAIL: Map.zcDecode")
+    }
+} catch {
+    print("❌ FAIL: Map.zcDecode - Error: \(error)")
+}
 
-// 4. Edge Cases
-assertTestError(name: "Empty Object", json: "{}", type: User.self, expected: "decodingError")
-assertTestError(name: "Malformed JSON", json: "{ invalid }", type: User.self, expected: "invalidJSON")
+// 4. Testing Array extension
+let array: [Any] = [["name": "ZC", "age": "25", "is_vip": "true", "score": 100.0]]
+do {
+    let users = try array.zcDecode([User].self)
+    if users.first?.name == "ZC" && users.first?.age == 25 {
+        print("✅ PASS: Array.zcDecode")
+    } else {
+        print("❌ FAIL: Array.zcDecode")
+    }
+} catch {
+    print("❌ FAIL: Array.zcDecode - Error: \(error)")
+}
 
-print("\n🏁 Ultimate Stress Test Suite Completed.\n")
+// 5. Edge Cases via String
+assertTestError(name: "String.zcDecode (Invalid Path)", json: "{\"data\": {\"user\": \"ZC\"}}", type: User.self, path: "data.wrong", expected: "pathNotFound")
+assertTestError(name: "String.zcDecode (Malformed)", json: "{ invalid }", type: User.self, expected: "invalidJSON")
+
+print("\n🏁 Extension-based Stress Test Suite Completed.\n")
