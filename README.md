@@ -48,4 +48,4 @@ do {
 
 
 ## 🧪 Demo
-Check out [Demo.swift](Demo.swift) for a complete runnable example!
+Check out [Demo.swift](Demo.swift) for a complete runnable example!\n\n## 🛠 How to Run Demo\n\nYou can run the demo directly from the terminal without any Xcode setup:\n\n1. Clone the repo:\n`git clone https://github.com/ZClee128/ZCModelKit.git`\n2. Enter the directory:\n`cd ZCModelKit`\n3. Run the demo:\n`swift run ZCModelKitDemo`
