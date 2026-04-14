@@ -1,67 +1,42 @@
 # ZCModelKit 🚀
 
-A lightweight, zero-configuration JSON decoding utility for Swift.
+**ZCModelKit** is a commercial-grade Swift JSON parsing library designed for absolute resilience and zero-configuration. It empowers developers to handle "dirty" API responses with a pure `Codable` approach, removing the need for manual mapping or fragile macros.
 
-## 🌟 Philosophy
-**No Annotations. No Mapping. Just Decodable.**
+## 💎 Core Philosophy
 
-ZCModelKit allows you to extract and decode models from complex JSON structures using simple path strings, without modifying your models or writing tedious `CodingKeys`.
+- **Zero-Configuration**: Works out-of-the-box with standard `Codable` models.
+- **Zero-Intrusion**: Your models remain pure Swift structs; no annotations or proprietary macros required.
+- **Maximum Resilience**: Automatically handles type coercion (e.g., String "123" $\rightarrow$ Int 123) and missing fields without crashing the entire object decoding.
+- **Path-Based Decoding**: Extract deeply nested objects using simple dot-notation paths.
 
-## 📦 Installation
-Add the following package to your project:
-`https://github.com/ZClee128/ZCModelKit`
+## 🚀 Key Features
 
-## 🚀 Quick Start
+- **Type Coercion**: Seamlessly converts `String` to `Int`, `Double`, and `Bool`.
+- **Path Navigation**: `decoder.decode(User.self, from: data, path: "data.user.profile")`.
+- **Resilient Arrays**: Decodes lists of objects even if some fields in the JSON are type-mismatched.
+- **Automatic Case Conversion**: Built-in support for `snake_case` to `camelCase` conversion.
+
+## 🛠 Quick Start
 
 ```swift
+let decoder = ZCJSONDecoder()
+let json = "{\"user_name\": \"ZClee\", \"age\": \"25\"}".data(using: .utf8)!
+
+// Pure Codable model
 struct User: Codable {
-    var name: String
-    var age: Int
+    let userName: String
+    let age: Int
 }
 
-let json = """
-{
-    "api": {
-        "data": {
-            "user": {
-                "name": "ZClee",
-                "age": 25
-            }
-        }
-    }
-}""".data(using: .utf8)!
-
-// Just one line to get your model from any path!
-do {
-    let user = try json.asDecodable(User.self, path: "api.data.user")
-    print("Hello, \(user.name)!")
-} catch {
-    print("Decoding failed: \(error)")
-}
+let user = try decoder.decode(User.self, from: json)
+print(user.age) // 25 (Automatically coerced from String to Int)
 ```
 
-## ✨ Features
-- **Path-based Navigation**: Extract models from any nested level using dot-notation (`"a.b.c"`).
-- **Zero Intrusion**: Works with any standard `Codable` type. No macros, no annotations.
-- **Smart Conversion**: Automatically handles `snake_case` to `camelCase` conversion.
-- **Ultra Lightweight**: Zero dependencies, minimal overhead.
+## 🧪 Commercial Stress Test
 
-
-## 🧪 Demo
-Check out [Demo.swift](Demo.swift) for a complete runnable example!\n\n## 🛠 How to Run Demo\n\nYou can run the demo directly from the terminal without any Xcode setup:\n\n1. Clone the repo:\n`git clone https://github.com/ZClee128/ZCModelKit.git`\n2. Enter the directory:\n`cd ZCModelKit`\n3. Run the demo:\n`swift run ZCModelKitDemo`
-
-## 🛡️ Commercial Grade Features
-
-ZCModelKit is designed for production environments where API stability cannot be guaranteed.
-
-### 1. Type Coercion (Intelligent Casting)
-Stop worrying about typeMismatch errors. ZCModelKit automatically coerces types:
-- String '123' -> Int 123
-- Int 1 -> Bool true
-- Any type -> String
-
-### 2. Resilient Decoding
-Unlike standard JSONDecoder which fails the entire object if one field is wrong, ZCModelKit handles errors gracefully.
-
-### 3. Zero-Configuration
-No macros, no annotations, no CodingKeys. Just pure Codable models and a path string.
+The library is tested against the following high-risk scenarios:
+- Deeply nested path navigation.
+- String-to-Numeric type coercion.
+- String-to-Boolean coercion.
+- Malformed JSON and empty objects.
+- Mixed-type arrays in commercial APIs.
