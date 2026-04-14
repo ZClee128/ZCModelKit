@@ -63,7 +63,7 @@ assertTest(name: "Coercion: String '99.5' -> Double", json: "{\"name\": \"ZC\", 
 assertTest(name: "Coercion: String 'true' -> Bool", json: "{\"name\": \"ZC\", \"age\": 25, \"is_vip\": \"true\", \"score\": 99.5}", type: User.self, expected: User(name: "ZC", age: 25, isVip: true, score: 99.5))
 
 // 2. Deep Path Navigation
-assertTest(name: "Deep Path: a.b.c", json: "{\"a\": {\"b\": {\"c\": {\"level1\": {\"level2\": {\"value\": \"OK\"} } }}}", type: DeepModel.self, path: "a.b.c", expected: DeepModel(level1: DeepModel.Level1(level2: DeepModel.Level1.Level2(value: "OK"))))
+assertTest(name: "Deep Path: a.b.c", json: "{\"a\": {\"b\": {\"c\": {\"level1\": {\"level2\": {\"value\": \"OK\"}}}}}}", type: DeepModel.self, path: "a.b.c", expected: DeepModel(level1: DeepModel.Level1(level2: DeepModel.Level1.Level2(value: "OK"))))
 assertTestError(name: "Invalid Path", json: "{\"data\": {\"user\": {\"name\": \"ZC\"}}}", type: User.self, path: "data.wrong", expected: "pathNotFound")
 
 // 3. Case Conversion & Collections
