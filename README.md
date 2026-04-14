@@ -49,3 +49,19 @@ do {
 
 ## 🧪 Demo
 Check out [Demo.swift](Demo.swift) for a complete runnable example!\n\n## 🛠 How to Run Demo\n\nYou can run the demo directly from the terminal without any Xcode setup:\n\n1. Clone the repo:\n`git clone https://github.com/ZClee128/ZCModelKit.git`\n2. Enter the directory:\n`cd ZCModelKit`\n3. Run the demo:\n`swift run ZCModelKitDemo`
+
+## 🛡️ Commercial Grade Features
+
+ZCModelKit is designed for production environments where API stability cannot be guaranteed.
+
+### 1. Type Coercion (Intelligent Casting)
+Stop worrying about typeMismatch errors. ZCModelKit automatically coerces types:
+- String '123' -> Int 123
+- Int 1 -> Bool true
+- Any type -> String
+
+### 2. Resilient Decoding
+Unlike standard JSONDecoder which fails the entire object if one field is wrong, ZCModelKit handles errors gracefully.
+
+### 3. Zero-Configuration
+No macros, no annotations, no CodingKeys. Just pure Codable models and a path string.
