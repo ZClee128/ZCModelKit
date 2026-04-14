@@ -1,72 +1,47 @@
 
 import Foundation
 
-/// ZCModelKit: A zero-intrusion JSON decoding library.
-/// Allows dynamic key mapping and default values without modifying the Codable models.
-public class ZCJSONDecoder {
-    public init() {}
-    
-    /// Decodes a type from data with optional path navigation, key mapping, and default values.
-    public func decode<T: Decodable>(
-        _ type: T.Type,
-        from data: Data,
-        path: String? = nil,
-        mapping: [String: String] = [:],
-        defaults: [String: Any] = [:]
-    ) throws -> T {
-        // 1. Parse root JSON into a dictionary
-        guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Root JSON is not a dictionary"))
+public enum ZCJSONError: Error {
+    case invalidJSON
+    case pathNotFound(String)
+    case decodingError(Error)
+}
+
+public extension Data {
+    /// 解析指定路径下的 JSON 为指定模型
+    /// - Parameters:
+    ///   - type: 目标模型类型 (需遵循 Codable)
+    ///   - path: JSON 路径, 例如 "data.user.profile"
+    /// - Returns: 解析后的模型对象
+    func asDecodable<T: Decodable>(_ type: T.Type, path: String? = nil) throws -> T {
+        // 1. 将 Data 解析为基础字典/数组
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: self, options: []) else {
+            throw ZCJSONError.invalidJSON
         }
         
-        // 2. Path Navigation: Navigate to the target nested object
+        // 2. 路径导航
+        var currentObject: Any = jsonObject
         if let path = path {
             let components = path.components(separatedBy: ".")
             for component in components {
-                if let next = json[component] as? [String: Any] {
-                    json = next
+                if let dict = currentObject as? [String: Any], let next = dict[component] {
+                    currentObject = next
                 } else {
-                    throw DecodingError.keyNotFound(DynamicKey.self, .init(codingPath: [], debugDescription: "Path component '\(component)' not found in path \(path)"))
+                    throw ZCJSONError.pathNotFound(path)
                 }
             }
         }
         
-        // 3. Apply Dynamic Mapping and Defaults
-        // We create a new dictionary where keys are translated to match the model's property names
-        var processedDict = [String: Any]()
+        // 3. 使用原生 JSONDecoder 解析目标片段
+        // 开启 convertFromSnakeCase 以支持常见的下划线转驼峰
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        // First, fill in all available values from the JSON based on mapping
-        // The mapping is [ModelProperty : JSONKey]
-        for (modelKey, jsonKey) in mapping {
-            if let value = json[jsonKey] {
-                processedDict[modelKey] = value
-            }
+        do {
+            let targetData = try JSONSerialization.data(withJSONObject: currentObject, options: [])
+            return try decoder.decode(T.self, from: targetData)
+        } catch {
+            throw ZCJSONError.decodingError(error)
         }
-        
-        // Also add values from the JSON that don't have a mapping (direct match)
-        for (jsonKey, value) in json {
-            if !mapping.values.contains(jsonKey) {
-                processedDict[jsonKey] = value
-            }
-        }
-        
-        // Finally, inject default values for missing keys
-        for (modelKey, defaultValue) in defaults {
-            if processedDict[modelKey] == nil {
-                processedDict[modelKey] = defaultValue
-            }
-        }
-        
-        // 4. Convert the processed dictionary back to Data and use standard JSONDecoder
-        let finalData = try JSONSerialization.data(withJSONObject: processedDict, options: [])
-        return try JSONDecoder().decode(T.self, from: finalData)
     }
-}
-
-// Internal helper for error reporting
-struct DynamicKey: CodingKey {
-    var stringValue: String
-    var intValue: Int? { nil }
-    init(stringValue: String) { self.stringValue = stringValue }
-    init?(intValue: Int) { return nil }
 }
