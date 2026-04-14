@@ -27,7 +27,7 @@ struct Company: Codable, Equatable {
 
 // --- Test Framework ---
 
-func assertTest<T: Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
+func assertTest<T: Decodable & Equatable>(name: String, json: String, type: T.Type, path: String? = nil, expected: T) {
     let decoder = ZCJSONDecoder()
     let data = json.data(using: .utf8)!
     do {
