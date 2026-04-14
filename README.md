@@ -45,3 +45,7 @@ do {
 - **Zero Intrusion**: Works with any standard `Codable` type. No macros, no annotations.
 - **Smart Conversion**: Automatically handles `snake_case` to `camelCase` conversion.
 - **Ultra Lightweight**: Zero dependencies, minimal overhead.
+
+
+## 🧪 Demo
+Check out [Demo.swift](Demo.swift) for a complete runnable example!
